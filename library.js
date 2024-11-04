@@ -131,7 +131,7 @@ const getOptions = (opts = {}) => {
     return options;
 };
 
-const getGainTimings = (awesomesaucemorse, opts, currentTime = 0) => {
+const getGainTimings = (morse, opts, currentTime = 0) => {
     const timings = [];
     let { unit, fwUnit } = opts;
     let time = 0;
@@ -152,27 +152,27 @@ const getGainTimings = (awesomesaucemorse, opts, currentTime = 0) => {
         timings.push([0, currentTime + time]);
         time += i * fwUnit;
     };
-    for (let i = 0, addSilence = false; i <= awesomesaucemorse.length; i++) {
-        if (awesomesaucemorse[i] === opts.space) {
+    for (let i = 0, addSilence = false; i <= morse.length; i++) {
+        if (morse[i] === opts.space) {
             gap(7);
             addSilence = false;
         }
-        else if (awesomesaucemorse[i] === opts.dot) {
+        else if (morse[i] === opts.dot) {
             if (addSilence)
                 silence(1);
             else
                 addSilence = true;
             tone(1);
         }
-        else if (awesomesaucemorse[i] === opts.dash) {
+        else if (morse[i] === opts.dash) {
             if (addSilence)
                 silence(1);
             else
                 addSilence = true;
             tone(3);
         }
-        else if ((typeof awesomesaucemorse[i + 1] !== 'undefined' && awesomesaucemorse[i + 1] !== opts.space) &&
-            (typeof awesomesaucemorse[i - 1] !== 'undefined' && awesomesaucemorse[i - 1] !== opts.space)) {
+        else if ((typeof morse[i + 1] !== 'undefined' && morse[i + 1] !== opts.space) &&
+            (typeof morse[i - 1] !== 'undefined' && morse[i - 1] !== opts.space)) {
             gap(3);
             addSilence = false;
         }
@@ -224,14 +224,14 @@ const encodeWAV = (sampleRate, samples) => {
     floatTo16BitPCM(view, 44, samples);
     return view;
 };
-const audio = (awesomesaucemorse, options) => {
+const audio = (morse, options) => {
     let AudioContextClass = window.AudioContext || window.webkitAudioContext;
     let OfflineAudioContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!AudioContextClass || !OfflineAudioContextClass) {
         throw new Error('Web Audio API is not supported in this browser');
     }
     const context = new AudioContextClass();
-    const [gainValues, totalTime] = getGainTimings(awesomesaucemorse, options);
+    const [gainValues, totalTime] = getGainTimings(morse, options);
     const offlineContext = new OfflineAudioContextClass(1, 44100 * totalTime, 44100);
     const oscillator = offlineContext.createOscillator();
     const gainNode = offlineContext.createGain();
@@ -290,7 +290,7 @@ const audio = (awesomesaucemorse, options) => {
         const anchor = document.createElement('a');
         anchor.href = waveUrl;
         anchor.target = '_blank';
-        anchor.download = filename || 'awesomesaucemorse.wav';
+        anchor.download = filename || 'morse.wav';
         anchor.click();
     };
     return {
@@ -315,7 +315,7 @@ const audio = (awesomesaucemorse, options) => {
     else if (root !== undefined) {
         root[name] = factory();
     }
-})('awesomesaucemorse-code-translator', globalThis, () => {
+})('awesomesauce-morse-decoder', window, () => {
     const encode = (text, opts) => {
         const options = getOptions(opts);
         const characters = getCharacters(options);
@@ -328,10 +328,10 @@ const audio = (awesomesaucemorse, options) => {
             return options.invalid;
         }).join(options.separator).replace(/0/g, options.dot).replace(/1/g, options.dash);
     };
-    const decode = (awesomesaucemorse, opts) => {
+    const decode = (morse, opts) => {
         const options = getOptions(opts);
         const swapped = swapCharacters(options);
-        return awesomesaucemorse.replace(/\s+/g, options.separator).trim().split(options.separator).map(function (characters) {
+        return morse.replace(/\s+/g, options.separator).trim().split(options.separator).map(function (characters) {
             if (typeof swapped[characters] !== 'undefined') {
                 return swapped[characters];
             }
@@ -339,10 +339,10 @@ const audio = (awesomesaucemorse, options) => {
         }).join('');
     };
     const characters = (options, usePriority) => getMappedCharacters(getOptions(options), usePriority);
-    const audio$1 = (text, opts, awesomesaucemorseString) => {
-        const awesomesaucemorse = awesomesaucemorseString || encode(text, opts);
+    const audio$1 = (text, opts, morseString) => {
+        const morse = morseString || encode(text, opts);
         const options = getOptions(opts);
-        return audio(awesomesaucemorse, options);
+        return audio(morse, options);
     };
     return {
         characters,
